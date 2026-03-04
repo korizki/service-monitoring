@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall react-native-maps)",
+      "Bash(npx expo install react-native-maps)"
+    ]
+  }
+}

@@ -1,112 +1,141 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { SiteDropdown } from "@/components/site-dropdown";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { LIST_SITE } from "@/store/initial";
+import { useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity } from "react-native";
+import DateTimePicker, {
+  DateType,
+  useDefaultStyles,
+} from "react-native-ui-datepicker";
 
 export default function TabTwoScreen() {
+  const defaultStyles = useDefaultStyles();
+  const [selected, setSelected] = useState<DateType>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedSite, setSelectedSite] = useState<
+    (typeof LIST_SITE)[number] | null
+  >(null);
+
+  async function handleSubmit() {
+    const date = String(selected)?.split("T")[0];
+    const url = selectedSite?.url;
+    console.log(date, url);
+    if (date && url) {
+      setIsLoading(true);
+      const action = await fetch(
+        `https://api42-web.${url}/hpr/v1/production/device/production-raw/batch`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            startDate: `${date} 00:00:00`,
+            endDate: `${date} 23:59:59`,
+            nrp: "22003265",
+          }),
+        },
+      );
+      const response = await action.json();
+      console.log(response);
+      if (response?.data?.modifiedCount) {
+        Alert.alert(
+          "Aksi Berhasil",
+          `Berhasil memperbarui ${response?.data?.modifiedCount} records`,
+          [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+        );
+      }
+      setIsLoading(false);
+    } else {
+      Alert.alert(
+        "Aksi Gagal",
+        "Silakan pilih tanggal dan site terlebih dulu",
+        [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+      );
+    }
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <ThemedView style={{ padding: 16, flex: 1 }}>
+      <ThemedText type="subtitle" style={{ marginTop: 24, marginBottom: 12 }}>
+        Invalid Cycle Params
+      </ThemedText>
+      <DateTimePicker
+        mode="single"
+        date={selected}
+        onChange={({ date }) => setSelected(date)}
+        styles={defaultStyles}
+      />
+      <ThemedView style={styles.formContainer}>
+        <SiteDropdown
+          sites={LIST_SITE}
+          selectedSite={selectedSite}
+          onSelect={setSelectedSite}
+          placeholder="Select a site"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <IconSymbol
+            name={isLoading ? "data-usage" : "save"}
+            size={24}
+            color="#ffffff"
+          />
+          <ThemedText style={styles.submitButtonText}>
+            {isLoading ? "Processing ..." : "Submit"}
+          </ThemedText>
+        </TouchableOpacity>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   headerImage: {
-    color: '#808080',
+    color: "#808080",
     bottom: -90,
     left: -35,
-    position: 'absolute',
+    position: "absolute",
   },
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
+  },
+  scrollView: {
+    backgroundColor: "pink",
+  },
+  text: {
+    fontSize: 42,
+    padding: 12,
+  },
+  container: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  formContainer: {
+    gap: 24,
+    transform: "translateY(-20px)",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  submitButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    backgroundColor: "#007AFF",
+    borderRadius: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  submitButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
