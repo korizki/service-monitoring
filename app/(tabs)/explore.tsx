@@ -19,9 +19,8 @@ export default function TabTwoScreen() {
   >(null);
 
   async function handleSubmit() {
-    const date = String(selected)?.split("T")[0];
+    const date = new Date(selected as any).toLocaleDateString("fr-CA");
     const url = selectedSite?.url;
-    console.log(date, url);
     if (date && url) {
       setIsLoading(true);
       const action = await fetch(
@@ -36,8 +35,7 @@ export default function TabTwoScreen() {
         },
       );
       const response = await action.json();
-      console.log(response);
-      if (response?.data?.modifiedCount) {
+      if (response?.data?.modifiedCount > 0) {
         Alert.alert(
           "Aksi Berhasil",
           `Berhasil memperbarui ${response?.data?.modifiedCount} records`,
